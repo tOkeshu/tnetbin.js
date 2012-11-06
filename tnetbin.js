@@ -10,7 +10,14 @@ var tnetbin = {
         }
 
         var s = obj.toString();
-        return s.length + ':' + s + '#';
+        var tag;
+
+        if (obj % 1 === 0)
+            tag = '#';
+        else
+            tag = '^'
+
+        return s.length + ':' + s + tag;
     }
 }
 

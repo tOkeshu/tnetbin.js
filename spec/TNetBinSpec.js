@@ -12,4 +12,8 @@ describe("tnetbin.js", function() {
     it("encodes integers", function() {
         expect(tnetbin.encode(123)).toBe('3:123#');
     });
+
+    it("encodes floats", function() {
+        expect(tnetbin.encode(3.141592653589793)).toBe('17:3.141592653589793^');
+    });
 });

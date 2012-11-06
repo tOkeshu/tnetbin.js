@@ -8,6 +8,9 @@ var tnetbin = {
         case false:
             return '5:false!';
         }
+
+        var s = obj.toString();
+        return s.length + ':' + s + '#';
     }
 }
 

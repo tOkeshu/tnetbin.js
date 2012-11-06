@@ -1,6 +1,13 @@
 var tnetbin = {
     encode: function(obj) {
-        return '0:~';
+        switch (obj) {
+        case null:
+            return '0:~';
+        case true:
+            return '4:true!';
+        case false:
+            return '5:false!';
+        }
     }
 }
 

@@ -9,13 +9,20 @@ var tnetbin = {
             return '5:false!';
         }
 
+        var type = typeof obj;
         var s = obj.toString();
         var tag;
 
-        if (obj % 1 === 0)
-            tag = '#';
-        else
-            tag = '^'
+        switch (type) {
+        case 'string':
+            tag = ','
+            break;
+        case 'number':
+            if (obj % 1 === 0)
+                tag = '#';
+            else
+                tag = '^'
+        }
 
         return s.length + ':' + s + tag;
     }

@@ -20,4 +20,11 @@ describe("tnetbin.js", function() {
     it("encodes strings", function() {
         expect(tnetbin.encode('Back to the Future')).toBe('18:Back to the Future,');
     });
+
+    it("encodes array buffers", function() {
+        var buffer = new ArrayBuffer(16);
+        var s = String.fromCharCode.apply(null, new Uint16Array(buffer));
+        var expected = '8:' + s + ',';
+        expect(tnetbin.encode(buffer)).toBe(expected)
+    });
 });

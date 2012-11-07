@@ -15,13 +15,17 @@ var tnetbin = {
 
         switch (type) {
         case 'string':
-            tag = ','
+            tag = ',';
             break;
         case 'number':
             if (obj % 1 === 0)
                 tag = '#';
             else
-                tag = '^'
+                tag = '^';
+            break;
+        case 'object':
+            s = String.fromCharCode.apply(null, new Uint16Array(obj));
+            tag = ',';
         }
 
         return s.length + ':' + s + tag;

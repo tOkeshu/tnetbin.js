@@ -24,8 +24,15 @@ var tnetbin = {
                 tag = '^';
             break;
         case 'object':
-            s = String.fromCharCode.apply(null, new Uint16Array(obj));
-            tag = ',';
+            if (obj instanceof ArrayBuffer) {
+                s = String.fromCharCode.apply(null, new Uint16Array(obj));
+                tag = ',';
+            } else if (obj instanceof Array) {
+                s = obj.map(function(o) {
+                    return tnetbin.encode(o);
+                }).join('');
+                tag = ']';
+            }
         }
 
         return s.length + ':' + s + tag;

@@ -27,4 +27,10 @@ describe("tnetbin.js", function() {
         var result = '8:' + s + ',';
         expect(tnetbin.encode(buffer)).toBe(result)
     });
+
+    it("encodes lists", function() {
+        var array = ["hello", 12345, 3.14, false];
+        var result = "31:5:hello,5:12345#4:3.14^5:false!]";
+        expect(tnetbin.encode(array)).toBe(result);
+    });
 });

@@ -24,7 +24,7 @@ describe("tnetbin.js", function() {
     it("encodes array buffers", function() {
         var buffer = new ArrayBuffer(16);
         var s = String.fromCharCode.apply(null, new Uint16Array(buffer));
-        var expected = '8:' + s + ',';
-        expect(tnetbin.encode(buffer)).toBe(expected)
+        var result = '8:' + s + ',';
+        expect(tnetbin.encode(buffer)).toBe(result)
     });
 });

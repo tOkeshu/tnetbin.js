@@ -33,4 +33,10 @@ describe("tnetbin.js", function() {
         var result = "31:5:hello,5:12345#4:3.14^5:false!]";
         expect(tnetbin.encode(array)).toBe(result);
     });
+
+    it("encodes objects", function() {
+        var object = {a: "hello", b: 12345, c: 3.14, d: false};
+        var result = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
+        expect(tnetbin.encode(object)).toBe(result);
+    });
 });

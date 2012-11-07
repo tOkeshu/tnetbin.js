@@ -32,6 +32,16 @@ var tnetbin = {
                     return tnetbin.encode(o);
                 }).join('');
                 tag = ']';
+            } else {
+                var attrs = [];
+                for (var attr in obj) {
+                    if (obj.hasOwnProperty(attr)) {
+                        attrs.push(tnetbin.encode(attr),
+                                   tnetbin.encode(obj[attr]));
+                    }
+                }
+                s = attrs.join('');
+                tag = '}';
             }
         }
 

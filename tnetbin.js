@@ -9,30 +9,30 @@ var tnetbin = {
             return '5:false!';
         }
 
-        var type = typeof obj;
-        var s = obj.toString();
-        var tag;
+        var type = typeof obj, s, tag;
 
         switch (type) {
         case 'string':
+            s   = obj;
             tag = ',';
             break;
         case 'number':
+            s = obj.toString();
+            // Integer
             if (obj % 1 === 0)
                 tag = '#';
+            // Float
             else
                 tag = '^';
             break;
         case 'object':
-            if (obj instanceof ArrayBuffer) {
+            if (obj instanceof ArrayBuffer) { // ArrayBuffer
                 s = String.fromCharCode.apply(null, new Uint16Array(obj));
                 tag = ',';
-            } else if (obj instanceof Array) {
-                s = obj.map(function(o) {
-                    return tnetbin.encode(o);
-                }).join('');
+            } else if (obj instanceof Array) { // List
+                s = obj.map(tnetbin.encode).join('');
                 tag = ']';
-            } else {
+            } else { // Object
                 var attrs = [];
                 for (var attr in obj) {
                     if (obj.hasOwnProperty(attr)) {

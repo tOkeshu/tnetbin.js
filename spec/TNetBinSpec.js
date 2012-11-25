@@ -39,4 +39,9 @@ describe("tnetbin.js", function() {
         var result = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
         expect(tnetbin.encode(object)).toBe(result);
     });
+
+
+    it("decodes null", function() {
+        expect(tnetbin.decode('0:~')).toBe(null);
+    });
 });

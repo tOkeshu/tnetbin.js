@@ -46,6 +46,10 @@ var tnetbin = {
         }
 
         return s.length + ':' + s + tag;
+    },
+
+    decode: function(data) {
+        return null;
     }
 }
 

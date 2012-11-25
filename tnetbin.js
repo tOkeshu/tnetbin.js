@@ -49,6 +49,23 @@ var tnetbin = {
     },
 
     decode: function(data) {
+        var buffer = new ArrayBuffer(data.length * 2);
+        var view = new Uint16Array(buffer);
+
+        for (var i = 0, length = data.length; i < length; i++) {
+            view[i] = data.charCodeAt(i);
+        }
+
+        var colon = 0;
+        while (view[colon] != 58)
+            colon++;
+
+        if (colon === 1) {
+            if (view[0] === 52 && view[6] === 33)
+                return true;
+            if (view[0] === 53 && view[7] === 33)
+                return false;
+        }
         return null;
     }
 }

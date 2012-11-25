@@ -44,4 +44,9 @@ describe("tnetbin.js", function() {
     it("decodes null", function() {
         expect(tnetbin.decode('0:~')).toBe(null);
     });
+
+    it("decodes booleans", function() {
+        expect(tnetbin.decode('4:true!')).toBe(true);
+        expect(tnetbin.decode('5:false!')).toBe(false);
+    });
 });

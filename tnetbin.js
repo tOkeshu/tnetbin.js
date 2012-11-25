@@ -61,12 +61,23 @@ var tnetbin = {
             colon++;
 
         if (colon === 1) {
+            if (view[0] === 48)
+                return null;
             if (view[0] === 52 && view[6] === 33)
                 return true;
             if (view[0] === 53 && view[7] === 33)
                 return false;
         }
-        return null;
+
+        for (var j = colon - 1, size = 0, m = 1; j >= 0; j--, m *= 10) {
+            size += m * (view[j] - 48);
+        }
+
+        for (var x = (colon + size), integer = 0, n = 1; x > colon; x--, n *= 10) {
+            integer += n * (view[x] - 48);
+        }
+
+        return integer;
     }
 }
 

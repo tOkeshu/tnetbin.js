@@ -49,4 +49,8 @@ describe("tnetbin.js", function() {
         expect(tnetbin.decode('4:true!')).toBe(true);
         expect(tnetbin.decode('5:false!')).toBe(false);
     });
+
+    it("decodes integers", function() {
+        expect(tnetbin.decode('11:12345678901#')).toBe(12345678901);
+    });
 });

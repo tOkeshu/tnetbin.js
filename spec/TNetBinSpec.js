@@ -57,4 +57,8 @@ describe("tnetbin.js", function() {
     it("decodes floats", function() {
         expect(tnetbin.decode('17:3.141592653589793^')).toBe(3.141592653589793);
     });
+
+    it("decodes strings", function() {
+        expect(tnetbin.decode('18:Back to the Future,')).toBe('Back to the Future');
+    });
 });

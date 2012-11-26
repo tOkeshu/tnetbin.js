@@ -96,6 +96,11 @@ var tnetbin = {
             return integer + dec;
         }
 
+        if (tag === 44) {
+            var start = (colon + 1) * 2;
+            var v = new Uint16Array(buffer, start, size);
+            return String.fromCharCode.apply(null, v);
+        }
     }
 }
 

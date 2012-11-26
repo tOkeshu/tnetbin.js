@@ -50,52 +50,66 @@ var tnetbin = {
 
     decode: function(data) {
         var buffer = new ArrayBuffer(data.length * 2);
-        var view = new Uint16Array(buffer);
+        var view   = new Uint16Array(buffer);
+        var size, tag; // TNetStrings attributes
+        var cursor, colon, value, decimal, multiplier; // parsing vars
 
-        for (var i = 0, length = data.length; i < length; i++) {
-            view[i] = data.charCodeAt(i);
-        }
+        // Transform the string to an array buffer
+        for (cursor = 0; cursor < data.length; cursor++)
+            view[cursor] = data.charCodeAt(cursor);
+        // Find the colon position
+        for (colon = 0; view[colon] != 58; colon++);
 
-        var colon = 0;
-        while (view[colon] != 58)
-            colon++;
-
+        // Simple cases
         if (colon === 1) {
+            // null
             if (view[0] === 48)
                 return null;
+            // true
             if (view[0] === 52 && view[6] === 33)
                 return true;
+            // false
             if (view[0] === 53 && view[7] === 33)
                 return false;
         }
 
-        for (var j = colon - 1, size = 0, m = 1; j >= 0; j--, m *= 10) {
-            size += m * (view[j] - 48);
-        }
-        var tag = view[colon + size + 1];
+        size       = 0;
+        cursor     = colon - 1;
+        multiplier = 1;
+        for (; cursor >= 0; cursor--, multiplier *= 10)
+            size += multiplier * (view[cursor] - 48);
+        tag = view[colon + size + 1];
 
+        // Integers
         if (tag === 35) {
-            for (var x = (colon + size), integer = 0, n = 1; x > colon; x--, n *= 10) {
-                integer += n * (view[x] - 48);
-            }
+            value      = 0;
+            cursor     = colon + size;
+            multiplier = 1;
+            for (; cursor > colon; cursor--, multiplier *= 10)
+                value += multiplier * (view[cursor] - 48);
 
-            return integer;
+            return value;
         }
 
+        // Floats
         if (tag === 94) {
-            for (var i = (colon + size), dec = 0, n = 1; view[i] != 46; i--, n *= 10) {
-                dec += n * (view[i] - 48);
-            }
+            decimal    = 0;
+            cursor     = colon + size;
+            multiplier = 1;
+            for (; view[cursor] != 46; cursor--, multiplier *= 10)
+                decimal += multiplier * (view[cursor] - 48);
+            decimal = decimal/multiplier;
 
-            dec = dec/n;
-            i--;
-            for (var integer = 0, n = 1; i > colon; i--, n *= 10) {
-                integer += n * (view[i] - 48);
-            }
+            cursor--;
+            value      = 0;
+            multiplier = 1
+            for (; cursor > colon; cursor--, multiplier *= 10)
+                value += multiplier * (view[cursor] - 48);
 
-            return integer + dec;
+            return value + decimal;
         }
 
+        // Strings
         if (tag === 44) {
             var start = (colon + 1) * 2;
             var v = new Uint16Array(buffer, start, size);

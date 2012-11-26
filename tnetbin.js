@@ -72,12 +72,30 @@ var tnetbin = {
         for (var j = colon - 1, size = 0, m = 1; j >= 0; j--, m *= 10) {
             size += m * (view[j] - 48);
         }
+        var tag = view[colon + size + 1];
 
-        for (var x = (colon + size), integer = 0, n = 1; x > colon; x--, n *= 10) {
-            integer += n * (view[x] - 48);
+        if (tag === 35) {
+            for (var x = (colon + size), integer = 0, n = 1; x > colon; x--, n *= 10) {
+                integer += n * (view[x] - 48);
+            }
+
+            return integer;
         }
 
-        return integer;
+        if (tag === 94) {
+            for (var i = (colon + size), dec = 0, n = 1; view[i] != 46; i--, n *= 10) {
+                dec += n * (view[i] - 48);
+            }
+
+            dec = dec/n;
+            i--;
+            for (var integer = 0, n = 1; i > colon; i--, n *= 10) {
+                integer += n * (view[i] - 48);
+            }
+
+            return integer + dec;
+        }
+
     }
 }
 

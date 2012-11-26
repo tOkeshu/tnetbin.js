@@ -53,4 +53,8 @@ describe("tnetbin.js", function() {
     it("decodes integers", function() {
         expect(tnetbin.decode('11:12345678901#')).toBe(12345678901);
     });
+
+    it("decodes floats", function() {
+        expect(tnetbin.decode('17:3.141592653589793^')).toBe(3.141592653589793);
+    });
 });

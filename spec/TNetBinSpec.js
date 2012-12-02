@@ -61,4 +61,10 @@ describe("tnetbin.js", function() {
     it("decodes strings", function() {
         expect(tnetbin.decode('18:Back to the Future,').value).toBe('Back to the Future');
     });
+
+    it("decodes lists", function() {
+        var tnet = "31:5:hello,5:12345#4:3.14^5:false!]";
+        var list = ["hello", 12345, 3.14, false];
+        expect(tnetbin.decode(tnet).value).toEqual(list);
+    });
 });

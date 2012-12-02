@@ -67,4 +67,10 @@ describe("tnetbin.js", function() {
         var list = ["hello", 12345, 3.14, false];
         expect(tnetbin.decode(tnet).value).toEqual(list);
     });
+
+    it("decodes objects", function() {
+        var tnet = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
+        var obj = {a: "hello", b: 12345, c: 3.14, d: false};
+        expect(tnetbin.decode(tnet).value).toEqual(obj);
+    });
 });

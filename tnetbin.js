@@ -67,7 +67,7 @@ var tnetbin = {
         // Simple cases
         if (colon === 1) {
             // null
-            if (view[0] === 48)
+            if (view[0] === 48 && view[2] === 126)
                 return {value: null, remain: this.remain(view, 3)};
             // true
             if (view[0] === 52 && view[6] === 33)
@@ -180,6 +180,9 @@ var tnetbin = {
     },
 
     decodeDict: function(view, colon, size) {
+        if (size === 0)
+            return {value: {}, remain: this.remain(view, colon + size + 2)};
+
         var v = new Uint16Array(size);
         var result, items = [], dict = {};
 

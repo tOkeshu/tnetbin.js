@@ -28,6 +28,8 @@ Decodes:
   - integers
   - floats
   - strings
+  - lists
+  - objects
 
 License
 -------

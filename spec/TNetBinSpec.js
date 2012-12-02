@@ -42,23 +42,23 @@ describe("tnetbin.js", function() {
 
 
     it("decodes null", function() {
-        expect(tnetbin.decode('0:~')).toBe(null);
+        expect(tnetbin.decode('0:~').value).toBe(null);
     });
 
     it("decodes booleans", function() {
-        expect(tnetbin.decode('4:true!')).toBe(true);
-        expect(tnetbin.decode('5:false!')).toBe(false);
+        expect(tnetbin.decode('4:true!').value).toBe(true);
+        expect(tnetbin.decode('5:false!').value).toBe(false);
     });
 
     it("decodes integers", function() {
-        expect(tnetbin.decode('11:12345678901#')).toBe(12345678901);
+        expect(tnetbin.decode('11:12345678901#').value).toBe(12345678901);
     });
 
     it("decodes floats", function() {
-        expect(tnetbin.decode('17:3.141592653589793^')).toBe(3.141592653589793);
+        expect(tnetbin.decode('17:3.141592653589793^').value).toBe(3.141592653589793);
     });
 
     it("decodes strings", function() {
-        expect(tnetbin.decode('18:Back to the Future,')).toBe('Back to the Future');
+        expect(tnetbin.decode('18:Back to the Future,').value).toBe('Back to the Future');
     });
 });

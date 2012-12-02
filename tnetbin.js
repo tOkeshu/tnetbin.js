@@ -64,13 +64,13 @@ var tnetbin = {
         if (colon === 1) {
             // null
             if (view[0] === 48)
-                return null;
+                return {value: null, remain: ''};
             // true
             if (view[0] === 52 && view[6] === 33)
-                return true;
+                return {value: true, remain: ''};
             // false
             if (view[0] === 53 && view[7] === 33)
-                return false;
+                return {value: false, remain: ''};
         }
 
         size = this.decodeSize(view, colon);
@@ -109,7 +109,7 @@ var tnetbin = {
         for (; cursor > colon; cursor--, multiplier *= 10)
             value += multiplier * (view[cursor] - 48);
 
-        return value;
+        return {value: value, remain: ''};
     },
 
     decodeFloat: function(view, colon, size) {
@@ -126,13 +126,14 @@ var tnetbin = {
         for (; cursor > colon; cursor--, multiplier *= 10)
             value += multiplier * (view[cursor] - 48);
 
-        return value + decimal;
+        return {value: value + decimal, remain: ''};
     },
 
     decodeString: function(buffer, colon, size) {
         var start = (colon + 1) * 2;
         var v = new Uint16Array(buffer, start, size);
-        return String.fromCharCode.apply(null, v);
+        var value = String.fromCharCode.apply(null, v);
+        return {value: value, remain: ''};
     }
 }
 

@@ -100,9 +100,9 @@ var tnetbin = {
             return this.decodeList(view, colon, size);
         }
 
-        // Objects
+        // Dicts
         if (tag === 125) {
-            return this.decodeObject(view, colon, size);
+            return this.decodeDict(view, colon, size);
         }
     },
 
@@ -179,9 +179,9 @@ var tnetbin = {
         return {value: list, remain: this.remain(view, colon + size + 2)};
     },
 
-    decodeObject: function(view, colon, size) {
+    decodeDict: function(view, colon, size) {
         var v = new Uint16Array(size);
-        var result, items = [], obj = {};
+        var result, items = [], dict = {};
 
         for (var i = 0; i < size; i++)
             v[i] = view[i + colon + 1];
@@ -194,9 +194,9 @@ var tnetbin = {
         }
 
         for (var i = 0; i < items.length; i+=2)
-            obj[items[i]] = items[i + 1];
+            dict[items[i]] = items[i + 1];
 
-        return {value: obj, remain: this.remain(view, colon + size + 2)};
+        return {value: dict, remain: this.remain(view, colon + size + 2)};
     }
 }
 

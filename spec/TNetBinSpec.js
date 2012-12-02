@@ -34,7 +34,7 @@ describe("tnetbin.js", function() {
         expect(tnetbin.encode(array)).toBe(result);
     });
 
-    it("encodes objects", function() {
+    it("encodes dicts", function() {
         var object = {a: "hello", b: 12345, c: 3.14, d: false};
         var result = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
         expect(tnetbin.encode(object)).toBe(result);
@@ -68,9 +68,9 @@ describe("tnetbin.js", function() {
         expect(tnetbin.decode(tnet).value).toEqual(list);
     });
 
-    it("decodes objects", function() {
+    it("decodes dicts", function() {
         var tnet = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
-        var obj = {a: "hello", b: 12345, c: 3.14, d: false};
-        expect(tnetbin.decode(tnet).value).toEqual(obj);
+        var dict = {a: "hello", b: 12345, c: 3.14, d: false};
+        expect(tnetbin.decode(tnet).value).toEqual(dict);
     });
 });

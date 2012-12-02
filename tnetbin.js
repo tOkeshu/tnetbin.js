@@ -52,7 +52,7 @@ var tnetbin = {
         var buffer = new ArrayBuffer(data.length * 2);
         var view   = new Uint16Array(buffer);
         var size, tag; // TNetStrings attributes
-        var cursor, colon, value, decimal, multiplier; // parsing vars
+        var cursor, colon; // parsing vars
 
         // Transform the string to an array buffer
         for (cursor = 0; cursor < data.length; cursor++)
@@ -73,48 +73,66 @@ var tnetbin = {
                 return false;
         }
 
-        size       = 0;
-        cursor     = colon - 1;
-        multiplier = 1;
-        for (; cursor >= 0; cursor--, multiplier *= 10)
-            size += multiplier * (view[cursor] - 48);
-        tag = view[colon + size + 1];
+        size = this.decodeSize(view, colon);
+        tag  = view[colon + size + 1];
 
         // Integers
         if (tag === 35) {
-            value      = 0;
-            cursor     = colon + size;
-            multiplier = 1;
-            for (; cursor > colon; cursor--, multiplier *= 10)
-                value += multiplier * (view[cursor] - 48);
-
-            return value;
+            return this.decodeInteger(view, colon, size);
         }
 
         // Floats
         if (tag === 94) {
-            decimal    = 0;
-            cursor     = colon + size;
-            multiplier = 1;
-            for (; view[cursor] != 46; cursor--, multiplier *= 10)
-                decimal += multiplier * (view[cursor] - 48);
-            decimal = decimal/multiplier;
-
-            cursor--;
-            value      = 0;
-            multiplier = 1
-            for (; cursor > colon; cursor--, multiplier *= 10)
-                value += multiplier * (view[cursor] - 48);
-
-            return value + decimal;
+            return this.decodeFloat(view, colon, size);
         }
 
         // Strings
         if (tag === 44) {
-            var start = (colon + 1) * 2;
-            var v = new Uint16Array(buffer, start, size);
-            return String.fromCharCode.apply(null, v);
+            return this.decodeString(buffer, colon, size);
         }
+    },
+
+    decodeSize: function(view, colon) {
+        var size       = 0;
+        var cursor     = colon - 1;
+        var multiplier = 1;
+        for (; cursor >= 0; cursor--, multiplier *= 10)
+            size += multiplier * (view[cursor] - 48);
+
+        return size;
+    },
+
+    decodeInteger: function(view, colon, size) {
+        var value      = 0;
+        var cursor     = colon + size;
+        var multiplier = 1;
+        for (; cursor > colon; cursor--, multiplier *= 10)
+            value += multiplier * (view[cursor] - 48);
+
+        return value;
+    },
+
+    decodeFloat: function(view, colon, size) {
+        var value      = 0;
+        var decimal    = 0;
+        var cursor     = colon + size;
+        var multiplier = 1;
+        for (; view[cursor] != 46; cursor--, multiplier *= 10)
+            decimal += multiplier * (view[cursor] - 48);
+        decimal = decimal/multiplier;
+
+        cursor--;
+        multiplier = 1
+        for (; cursor > colon; cursor--, multiplier *= 10)
+            value += multiplier * (view[cursor] - 48);
+
+        return value + decimal;
+    },
+
+    decodeString: function(buffer, colon, size) {
+        var start = (colon + 1) * 2;
+        var v = new Uint16Array(buffer, start, size);
+        return String.fromCharCode.apply(null, v);
     }
 }
 

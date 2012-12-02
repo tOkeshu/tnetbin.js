@@ -49,14 +49,18 @@ var tnetbin = {
     },
 
     decode: function(data) {
-        var buffer = new ArrayBuffer(data.length * 2);
-        var view   = new Uint16Array(buffer);
+        var view = new Uint16Array(data.length);
         var size, tag; // TNetStrings attributes
-        var cursor, colon, value, decimal, multiplier; // parsing vars
+        var cursor, colon; // parsing vars
 
-        // Transform the string to an array buffer
-        for (cursor = 0; cursor < data.length; cursor++)
-            view[cursor] = data.charCodeAt(cursor);
+        if (data instanceof Uint16Array)
+            // data is already a view
+            view = data;
+        else
+            // Transform the string to an array buffer
+            for (cursor = 0; cursor < data.length; cursor++)
+                view[cursor] = data.charCodeAt(cursor);
+
         // Find the colon position
         for (colon = 0; view[colon] != 58; colon++);
 
@@ -64,57 +68,110 @@ var tnetbin = {
         if (colon === 1) {
             // null
             if (view[0] === 48)
-                return null;
+                return {value: null, remain: this.remain(view, 3)};
             // true
             if (view[0] === 52 && view[6] === 33)
-                return true;
+                return {value: true, remain: this.remain(view, 7)};
             // false
             if (view[0] === 53 && view[7] === 33)
-                return false;
+                return {value: false, remain: this.remain(view, 8)};
         }
 
-        size       = 0;
-        cursor     = colon - 1;
-        multiplier = 1;
-        for (; cursor >= 0; cursor--, multiplier *= 10)
-            size += multiplier * (view[cursor] - 48);
-        tag = view[colon + size + 1];
+        size = this.decodeSize(view, colon);
+        tag  = view[colon + size + 1];
 
         // Integers
         if (tag === 35) {
-            value      = 0;
-            cursor     = colon + size;
-            multiplier = 1;
-            for (; cursor > colon; cursor--, multiplier *= 10)
-                value += multiplier * (view[cursor] - 48);
-
-            return value;
+            return this.decodeInteger(view, colon, size);
         }
 
         // Floats
         if (tag === 94) {
-            decimal    = 0;
-            cursor     = colon + size;
-            multiplier = 1;
-            for (; view[cursor] != 46; cursor--, multiplier *= 10)
-                decimal += multiplier * (view[cursor] - 48);
-            decimal = decimal/multiplier;
-
-            cursor--;
-            value      = 0;
-            multiplier = 1
-            for (; cursor > colon; cursor--, multiplier *= 10)
-                value += multiplier * (view[cursor] - 48);
-
-            return value + decimal;
+            return this.decodeFloat(view, colon, size);
         }
 
         // Strings
         if (tag === 44) {
-            var start = (colon + 1) * 2;
-            var v = new Uint16Array(buffer, start, size);
-            return String.fromCharCode.apply(null, v);
+            return this.decodeString(view, colon, size);
         }
+
+        // Lists
+        if (tag === 93) {
+            return this.decodeList(view, colon, size);
+        }
+    },
+
+    decodeSize: function(view, colon) {
+        var size       = 0;
+        var cursor     = colon - 1;
+        var multiplier = 1;
+        for (; cursor >= 0; cursor--, multiplier *= 10)
+            size += multiplier * (view[cursor] - 48);
+
+        return size;
+    },
+
+    decodeInteger: function(view, colon, size) {
+        var value      = 0;
+        var cursor     = colon + size;
+        var multiplier = 1;
+        for (; cursor > colon; cursor--, multiplier *= 10)
+            value += multiplier * (view[cursor] - 48);
+
+        return {value: value, remain: this.remain(view, colon + size + 2)};
+    },
+
+    decodeFloat: function(view, colon, size) {
+        var value      = 0;
+        var decimal    = 0;
+        var cursor     = colon + size;
+        var multiplier = 1;
+        for (; view[cursor] != 46; cursor--, multiplier *= 10)
+            decimal += multiplier * (view[cursor] - 48);
+        decimal = decimal/multiplier;
+
+        cursor--;
+        multiplier = 1
+        for (; cursor > colon; cursor--, multiplier *= 10)
+            value += multiplier * (view[cursor] - 48);
+
+        return {value: value + decimal, remain: this.remain(view, colon + size + 2)};
+    },
+
+    decodeString: function(view, colon, size) {
+        var offset = colon + 1;
+        var v = new Uint16Array(size);
+
+        for (var i = 0; i < size; i++)
+            v[i] = view[i + offset];
+        var value = String.fromCharCode.apply(null, v);
+
+        offset += size + 1;
+        return {value: value, remain: this.remain(view, offset)};
+    },
+
+    remain: function(view, offset) {
+        var v = new Uint16Array(view.length - offset);
+        for (var i = offset; i < view.length; i++)
+            v[i - offset] = view[i];
+        return String.fromCharCode.apply(null, v);
+    },
+
+    decodeList: function(view, colon, size) {
+        var v = new Uint16Array(size);
+        var list = [];
+
+        for (var i = 0; i < size; i++)
+            v[i] = view[i + colon + 1];
+
+        var result = this.decode(v);
+        list.push(result.value);
+        while (result.remain != '') {
+            result = this.decode(result.remain);
+            list.push(result.value);
+        }
+
+        return {value: list, remain: this.remain(view, colon + size + 2)};
     }
 }
 

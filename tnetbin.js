@@ -163,6 +163,9 @@ var tnetbin = {
     },
 
     decodeList: function(view, colon, size) {
+        if (size === 0)
+            return {value: [], remain: this.remain(view, colon + size + 2)};
+
         var v = new Uint16Array(size);
         var list = [];
 

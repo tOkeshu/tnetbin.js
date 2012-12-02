@@ -81,6 +81,10 @@ describe("tnetbin.js", function() {
 });
 
 describe("edge cases/bugs", function() {
+    it("should decode empty lists", function() {
+        expect(tnetbin.decode('0:]').value).toEqual([]);
+    });
+
     it("should decode empty dicts", function() {
         expect(tnetbin.decode('0:}').value).toEqual({});
     });

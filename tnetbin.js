@@ -68,40 +68,33 @@ var tnetbin = {
         if (colon === 1) {
             // null
             if (view[0] === 48 && view[2] === 126)
-                return {value: null, remain: this.remain(view, 3)};
+                return this.decodeNull(view);
             // true
             if (view[0] === 52 && view[6] === 33)
-                return {value: true, remain: this.remain(view, 7)};
+                return this.decodeTrue(view);
             // false
             if (view[0] === 53 && view[7] === 33)
-                return {value: false, remain: this.remain(view, 8)};
+                return this.decodeFalse(view);
         }
 
         size = this.decodeSize(view, colon);
         tag  = view[colon + size + 1];
 
+        switch (tag) {
         // Integers
-        if (tag === 35) {
+        case 35:
             return this.decodeInteger(view, colon, size);
-        }
-
         // Floats
-        if (tag === 94) {
+        case 94:
             return this.decodeFloat(view, colon, size);
-        }
-
         // Strings
-        if (tag === 44) {
+        case 44:
             return this.decodeString(view, colon, size);
-        }
-
         // Lists
-        if (tag === 93) {
+        case 93:
             return this.decodeList(view, colon, size);
-        }
-
         // Dicts
-        if (tag === 125) {
+        case 125:
             return this.decodeDict(view, colon, size);
         }
     },
@@ -114,6 +107,18 @@ var tnetbin = {
             size += multiplier * (view[cursor] - 48);
 
         return size;
+    },
+
+    decodeNull: function(view) {
+        return {value: null, remain: this.remain(view, 3)};
+    },
+
+    decodeTrue: function(view) {
+        return {value: true, remain: this.remain(view, 7)};
+    },
+
+    decodeFalse: function(view) {
+        return {value: false, remain: this.remain(view, 8)};
     },
 
     decodeInteger: function(view, colon, size) {

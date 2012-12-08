@@ -78,40 +78,40 @@
     DICT    = 125;
 
     function decode1(data, cursor) {
-        return decodeSize(data, cursor, function(data, cursor, size) {
-            return decodeTag(data, cursor, size, function(data, cursor, size, tag) {
-                switch (tag) {
-                case NULL:
-                    return decodeNull(data, cursor, size);
-                case BOOLEAN:
-                    return decodeBoolean(data, cursor, size);
-                case INTEGER:
-                    return decodeInteger(data, cursor, size);
-                case FLOAT:
-                    return decodeFloat(data, cursor, size);
-                case STRING:
-                    return decodeString(data, cursor, size);
-                case LIST:
-                    return decodeList(data, cursor, size);
-                case DICT:
-                    return decodeDict(data, cursor, size);
-                default:
-                    return {value: undefined, cursor: cursor + size + 1};
-                }
-            })
-        });
+        return decodeSize(data, cursor);
     }
 
-    function decodeSize(data, cursor, callback) {
+    function decodeSize(data, cursor) {
         for (var size=0; data[cursor] != COLON; cursor++) {
             size = size*10 + (data[cursor] - ZERO);
         }
 
-        return callback(data, cursor + 1, size);
+        return decodeTag(data, cursor + 1, size);
     }
 
-    function decodeTag(data, cursor, size, callback) {
-        return callback(data, cursor, size, data[cursor + size]);
+    function decodeTag(data, cursor, size) {
+        return decodePayload(data, cursor, size, data[cursor + size]);
+    }
+
+    function decodePayload(data, cursor, size, tag) {
+        switch (tag) {
+        case NULL:
+            return decodeNull(data, cursor, size);
+        case BOOLEAN:
+            return decodeBoolean(data, cursor, size);
+        case INTEGER:
+            return decodeInteger(data, cursor, size);
+        case FLOAT:
+            return decodeFloat(data, cursor, size);
+        case STRING:
+            return decodeString(data, cursor, size);
+        case LIST:
+            return decodeList(data, cursor, size);
+        case DICT:
+            return decodeDict(data, cursor, size);
+        default:
+            return {value: undefined, cursor: cursor + size + 1};
+        }
     }
 
     function remain(data, cursor) {

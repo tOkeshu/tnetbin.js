@@ -121,7 +121,6 @@
         return String.fromCharCode.apply(null, v);
     }
 
-
     function decodeNull(data, cursor) {
         return {value: null, cursor: cursor + 1};
     }
@@ -163,7 +162,7 @@
 
     function decodeList(data, cursor, size) {
         if (size === 0)
-            return {value: [], cursor: cursor};
+            return {value: [], cursor: cursor + 1};
 
         var list = [];
         var end  = cursor + size;
@@ -175,7 +174,7 @@
             cursor = result.cursor;
         } while (cursor < end);
 
-        return {value: list, cursor: result.cursor};
+        return {value: list, cursor: result.cursor + 1};
     }
 
     function decodeDict(data, cursor, size) {
@@ -188,7 +187,7 @@
         for (var i = 0, items = result.value; i < items.length; i+=2)
             dict[items[i]] = items[i + 1];
 
-        return {value: dict, cursor: result.cursor + 1};
+        return {value: dict, cursor: result.cursor};
     }
 
 }(window));

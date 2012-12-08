@@ -115,10 +115,8 @@
     }
 
     function remain(data, cursor) {
-        var v = new Uint16Array(data.length - cursor);
-        for (var i = 0, j = cursor; i < data.length; i++, j++)
-            v[i] = data[j];
-        return String.fromCharCode.apply(null, v);
+        var d = data.subarray(cursor);
+        return String.fromCharCode.apply(null, d);
     }
 
     function decodeNull(data, cursor) {
@@ -152,12 +150,8 @@
     }
 
     function decodeString(data, cursor, size) {
-        var d = new Uint16Array(size);
-
-        for (var i = 0; i < size; i++, cursor++)
-            d[i] = data[cursor];
-
-        return {value: String.fromCharCode.apply(null, d), cursor: cursor + 1};
+        var d = data.subarray(cursor, cursor + size);
+        return {value: String.fromCharCode.apply(null, d), cursor: cursor + size + 1};
     }
 
     function decodeList(data, cursor, size) {

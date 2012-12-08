@@ -1,213 +1,195 @@
-var tnetbin = {
-    encode: function(obj) {
-        switch (obj) {
-        case null:
-            return '0:~';
-        case true:
-            return '4:true!';
-        case false:
-            return '5:false!';
-        }
+(function(globalScope) {
 
-        var type = typeof obj, s, tag;
-
-        switch (type) {
-        case 'string':
-            s   = obj;
-            tag = ',';
-            break;
-        case 'number':
-            s = obj.toString();
-            // Integer
-            if (obj % 1 === 0)
-                tag = '#';
-            // Float
-            else
-                tag = '^';
-            break;
-        case 'object':
-            if (obj instanceof ArrayBuffer) { // ArrayBuffer
-                s = String.fromCharCode.apply(null, new Uint16Array(obj));
-                tag = ',';
-            } else if (obj instanceof Array) { // List
-                s = obj.map(tnetbin.encode).join('');
-                tag = ']';
-            } else { // Object
-                var attrs = [];
-                for (var attr in obj) {
-                    if (obj.hasOwnProperty(attr)) {
-                        attrs.push(tnetbin.encode(attr),
-                                   tnetbin.encode(obj[attr]));
-                    }
-                }
-                s = attrs.join('');
-                tag = '}';
+    globalScope.tnetbin = {
+        encode: function(obj) {
+            switch (obj) {
+            case null:
+                return '0:~';
+            case true:
+                return '4:true!';
+            case false:
+                return '5:false!';
             }
-        }
 
-        return s.length + ':' + s + tag;
-    },
+            var type = typeof obj, s, tag;
 
-    decode: function(data) {
-        var view = new Uint16Array(data.length);
-        var size, tag; // TNetStrings attributes
-        var cursor, colon; // parsing vars
+            switch (type) {
+            case 'string':
+                s   = obj;
+                tag = ',';
+                break;
+            case 'number':
+                s = obj.toString();
+                // Integer
+                if (obj % 1 === 0)
+                    tag = '#';
+                // Float
+                else
+                    tag = '^';
+                break;
+            case 'object':
+                if (obj instanceof ArrayBuffer) { // ArrayBuffer
+                    s = String.fromCharCode.apply(null, new Uint16Array(obj));
+                    tag = ',';
+                } else if (obj instanceof Array) { // List
+                    s = obj.map(tnetbin.encode).join('');
+                    tag = ']';
+                } else { // Object
+                    var attrs = [];
+                    for (var attr in obj) {
+                        if (obj.hasOwnProperty(attr)) {
+                            attrs.push(tnetbin.encode(attr),
+                                       tnetbin.encode(obj[attr]));
+                        }
+                    }
+                    s = attrs.join('');
+                    tag = '}';
+                }
+            }
 
-        if (data instanceof Uint16Array)
-            // data is already a view
-            view = data;
-        else
+            return s.length + ':' + s + tag;
+        },
+
+        decode: function(data) {
+            data = this.toArrayBuffer(data);
+            result = decode1(data, 0);
+
+            return {value: result.value, remain: remain(data, result.cursor)};
+        },
+
+        toArrayBuffer: function(data) {
+            var view = new Uint16Array(data.length);
             // Transform the string to an array buffer
-            for (cursor = 0; cursor < data.length; cursor++)
+            for (var cursor = 0; cursor < data.length; cursor++)
                 view[cursor] = data.charCodeAt(cursor);
 
-        // Find the colon position
-        for (colon = 0; view[colon] != 58; colon++);
+            return view;
+        }
+    }
 
-        // Simple cases
-        if (colon === 1) {
-            // null
-            if (view[0] === 48 && view[2] === 126)
-                return this.decodeNull(view);
-            // true
-            if (view[0] === 52 && view[6] === 33)
-                return this.decodeTrue(view);
-            // false
-            if (view[0] === 53 && view[7] === 33)
-                return this.decodeFalse(view);
+    COLON   = 58;
+    ZERO    = 48;
+    NULL    = 126;
+    BOOLEAN = 33;
+    INTEGER = 35;
+    FLOAT   = 94;
+    STRING  = 44;
+    LIST    = 93;
+    DICT    = 125;
+
+    function decode1(data, cursor) {
+        return decodeSize(data, cursor, function(data, cursor, size) {
+            return decodeTag(data, cursor, size, function(data, cursor, size, tag) {
+                switch (tag) {
+                case NULL:
+                    return decodeNull(data, cursor, size);
+                case BOOLEAN:
+                    return decodeBoolean(data, cursor, size);
+                case INTEGER:
+                    return decodeInteger(data, cursor, size);
+                case FLOAT:
+                    return decodeFloat(data, cursor, size);
+                case STRING:
+                    return decodeString(data, cursor, size);
+                case LIST:
+                    return decodeList(data, cursor, size);
+                case DICT:
+                    return decodeDict(data, cursor, size);
+                default:
+                    return {value: undefined, cursor: cursor + size + 1};
+                }
+            })
+        });
+    }
+
+    function decodeSize(data, cursor, callback) {
+        for (var size=0; data[cursor] != COLON; cursor++) {
+            size = size*10 + (data[cursor] - ZERO);
         }
 
-        size = this.decodeSize(view, colon);
-        tag  = view[colon + size + 1];
+        return callback(data, cursor + 1, size);
+    }
 
-        switch (tag) {
-        // Integers
-        case 35:
-            return this.decodeInteger(view, colon, size);
-        // Floats
-        case 94:
-            return this.decodeFloat(view, colon, size);
-        // Strings
-        case 44:
-            return this.decodeString(view, colon, size);
-        // Lists
-        case 93:
-            return this.decodeList(view, colon, size);
-        // Dicts
-        case 125:
-            return this.decodeDict(view, colon, size);
-        }
-    },
+    function decodeTag(data, cursor, size, callback) {
+        return callback(data, cursor, size, data[cursor + size]);
+    }
 
-    decodeSize: function(view, colon) {
-        var size       = 0;
-        var cursor     = colon - 1;
-        var multiplier = 1;
-        for (; cursor >= 0; cursor--, multiplier *= 10)
-            size += multiplier * (view[cursor] - 48);
-
-        return size;
-    },
-
-    decodeNull: function(view) {
-        return {value: null, remain: this.remain(view, 3)};
-    },
-
-    decodeTrue: function(view) {
-        return {value: true, remain: this.remain(view, 7)};
-    },
-
-    decodeFalse: function(view) {
-        return {value: false, remain: this.remain(view, 8)};
-    },
-
-    decodeInteger: function(view, colon, size) {
-        var value      = 0;
-        var cursor     = colon + size;
-        var multiplier = 1;
-        for (; cursor > colon; cursor--, multiplier *= 10)
-            value += multiplier * (view[cursor] - 48);
-
-        return {value: value, remain: this.remain(view, colon + size + 2)};
-    },
-
-    decodeFloat: function(view, colon, size) {
-        var value      = 0;
-        var decimal    = 0;
-        var cursor     = colon + size;
-        var multiplier = 1;
-        for (; view[cursor] != 46; cursor--, multiplier *= 10)
-            decimal += multiplier * (view[cursor] - 48);
-        decimal = decimal/multiplier;
-
-        cursor--;
-        multiplier = 1
-        for (; cursor > colon; cursor--, multiplier *= 10)
-            value += multiplier * (view[cursor] - 48);
-
-        return {value: value + decimal, remain: this.remain(view, colon + size + 2)};
-    },
-
-    decodeString: function(view, colon, size) {
-        var offset = colon + 1;
-        var v = new Uint16Array(size);
-
-        for (var i = 0; i < size; i++)
-            v[i] = view[i + offset];
-        var value = String.fromCharCode.apply(null, v);
-
-        offset += size + 1;
-        return {value: value, remain: this.remain(view, offset)};
-    },
-
-    remain: function(view, offset) {
-        var v = new Uint16Array(view.length - offset);
-        for (var i = offset; i < view.length; i++)
-            v[i - offset] = view[i];
+    function remain(data, cursor) {
+        var v = new Uint16Array(data.length - cursor);
+        for (var i = 0, j = cursor; i < data.length; i++, j++)
+            v[i] = data[j];
         return String.fromCharCode.apply(null, v);
-    },
+    }
 
-    decodeList: function(view, colon, size) {
+
+    function decodeNull(data, cursor) {
+        return {value: null, cursor: cursor + 1};
+    }
+
+    function decodeBoolean(data, cursor, size) {
+        return {value: (size === 4) ? true : false, cursor: cursor + size + 1};
+    }
+
+    function decodeInteger(data, cursor, size) {
+        var end = cursor + size;
+        for (var value = 0; cursor < end; cursor++)
+            value = value*10 + (data[cursor] - ZERO);
+
+        return {value: value, cursor: cursor + 1};
+    }
+
+    function decodeFloat(data, cursor, size) {
+        var exp, end = cursor + size;
+
+        for(var value = 0; data[cursor] != 46; cursor++)
+            value = value*10 + (data[cursor] - ZERO);
+
+        cursor++;
+        for (var decimal = 0, exp=1; cursor < end; cursor++, exp*=10) {
+            decimal = decimal*10 + (data[cursor] - ZERO);
+        }
+
+        return {value: value + (decimal/exp), cursor: cursor + 1};
+    }
+
+    function decodeString(data, cursor, size) {
+        var d = new Uint16Array(size);
+
+        for (var i = 0; i < size; i++, cursor++)
+            d[i] = data[cursor];
+
+        return {value: String.fromCharCode.apply(null, d), cursor: cursor + 1};
+    }
+
+    function decodeList(data, cursor, size) {
         if (size === 0)
-            return {value: [], remain: this.remain(view, colon + size + 2)};
+            return {value: [], cursor: cursor};
 
-        var v = new Uint16Array(size);
         var list = [];
+        var end  = cursor + size;
+        var result;
 
-        for (var i = 0; i < size; i++)
-            v[i] = view[i + colon + 1];
-
-        var result = this.decode(v);
-        list.push(result.value);
-        while (result.remain != '') {
-            result = this.decode(result.remain);
+        do {
+            result = decode1(data, cursor);
             list.push(result.value);
-        }
+            cursor = result.cursor;
+        } while (cursor < end);
 
-        return {value: list, remain: this.remain(view, colon + size + 2)};
-    },
+        return {value: list, cursor: result.cursor};
+    }
 
-    decodeDict: function(view, colon, size) {
+    function decodeDict(data, cursor, size) {
         if (size === 0)
-            return {value: {}, remain: this.remain(view, colon + size + 2)};
+            return {value: {}, cursor: cursor + 1};
 
-        var v = new Uint16Array(size);
-        var result, items = [], dict = {};
+        var dict = {};
 
-        for (var i = 0; i < size; i++)
-            v[i] = view[i + colon + 1];
-
-        result = this.decode(v);
-        items.push(result.value);
-        while (result.remain != '') {
-            result = this.decode(result.remain);
-            items.push(result.value);
-        }
-
-        for (var i = 0; i < items.length; i+=2)
+        var result = decodeList(data, cursor, size);
+        for (var i = 0, items = result.value; i < items.length; i+=2)
             dict[items[i]] = items[i + 1];
 
-        return {value: dict, remain: this.remain(view, colon + size + 2)};
+        return {value: dict, cursor: result.cursor + 1};
     }
-}
+
+}(window));
 

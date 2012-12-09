@@ -78,22 +78,19 @@
     DICT    = 125;
 
     function decode1(data, cursor) {
-        return decodeSize(data, cursor);
+        return decodeSize(data, cursor, decodePayload);
     }
 
-    function decodeSize(data, cursor) {
+    function decodeSize(data, cursor, callback) {
         for (var size=0; data[cursor] != COLON; cursor++) {
             size = size*10 + (data[cursor] - ZERO);
         }
 
-        return decodeTag(data, cursor + 1, size);
-    }
-
-    function decodeTag(data, cursor, size) {
-        return decodePayload(data, cursor, size, data[cursor + size]);
+        return callback(data, cursor + 1, size);
     }
 
     function decodePayload(data, cursor, size, tag) {
+        var tag = data[cursor + size];
         switch (tag) {
         case NULL:
             return decodeNull(data, cursor, size);

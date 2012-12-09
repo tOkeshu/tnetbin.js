@@ -52,7 +52,7 @@
 
         decode: function(data) {
             data = this.toArrayBuffer(data);
-            result = decode1(data, 0);
+            result = _decode(data, 0);
 
             return {value: result.value, remain: remain(data, result.cursor)};
         },
@@ -77,11 +77,11 @@
     LIST    = 93;
     DICT    = 125;
 
-    function decode1(data, cursor) {
-        return decodeSize(data, cursor, decodePayload);
+    function _decode(data, cursor) {
+        return _decodeSize(data, cursor, _decodePayload);
     }
 
-    function decodeSize(data, cursor, callback) {
+    function _decodeSize(data, cursor, callback) {
         for (var size=0; data[cursor] != COLON; cursor++) {
             size = size*10 + (data[cursor] - ZERO);
         }
@@ -89,23 +89,23 @@
         return callback(data, cursor + 1, size);
     }
 
-    function decodePayload(data, cursor, size, tag) {
+    function _decodePayload(data, cursor, size, tag) {
         var tag = data[cursor + size];
         switch (tag) {
         case NULL:
-            return decodeNull(data, cursor, size);
+            return _decodeNull(data, cursor, size);
         case BOOLEAN:
-            return decodeBoolean(data, cursor, size);
+            return _decodeBoolean(data, cursor, size);
         case INTEGER:
-            return decodeInteger(data, cursor, size);
+            return _decodeInteger(data, cursor, size);
         case FLOAT:
-            return decodeFloat(data, cursor, size);
+            return _decodeFloat(data, cursor, size);
         case STRING:
-            return decodeString(data, cursor, size);
+            return _decodeString(data, cursor, size);
         case LIST:
-            return decodeList(data, cursor, size);
+            return _decodeList(data, cursor, size);
         case DICT:
-            return decodeDict(data, cursor, size);
+            return _decodeDict(data, cursor, size);
         default:
             return {value: undefined, cursor: cursor + size + 1};
         }
@@ -116,15 +116,15 @@
         return String.fromCharCode.apply(null, d);
     }
 
-    function decodeNull(data, cursor) {
+    function _decodeNull(data, cursor) {
         return {value: null, cursor: cursor + 1};
     }
 
-    function decodeBoolean(data, cursor, size) {
+    function _decodeBoolean(data, cursor, size) {
         return {value: (size === 4) ? true : false, cursor: cursor + size + 1};
     }
 
-    function decodeInteger(data, cursor, size) {
+    function _decodeInteger(data, cursor, size) {
         var end = cursor + size;
         for (var value = 0; cursor < end; cursor++)
             value = value*10 + (data[cursor] - ZERO);
@@ -132,7 +132,7 @@
         return {value: value, cursor: cursor + 1};
     }
 
-    function decodeFloat(data, cursor, size) {
+    function _decodeFloat(data, cursor, size) {
         var exp, end = cursor + size;
 
         for(var value = 0; data[cursor] != 46; cursor++)
@@ -146,12 +146,12 @@
         return {value: value + (decimal/exp), cursor: cursor + 1};
     }
 
-    function decodeString(data, cursor, size) {
+    function _decodeString(data, cursor, size) {
         var d = data.subarray(cursor, cursor + size);
         return {value: String.fromCharCode.apply(null, d), cursor: cursor + size + 1};
     }
 
-    function decodeList(data, cursor, size) {
+    function _decodeList(data, cursor, size) {
         if (size === 0)
             return {value: [], cursor: cursor + 1};
 
@@ -160,7 +160,7 @@
         var result;
 
         do {
-            result = decode1(data, cursor);
+            result = _decode(data, cursor);
             list.push(result.value);
             cursor = result.cursor;
         } while (cursor < end);
@@ -168,13 +168,13 @@
         return {value: list, cursor: result.cursor + 1};
     }
 
-    function decodeDict(data, cursor, size) {
+    function _decodeDict(data, cursor, size) {
         if (size === 0)
             return {value: {}, cursor: cursor + 1};
 
         var dict = {};
 
-        var result = decodeList(data, cursor, size);
+        var result = _decodeList(data, cursor, size);
         for (var i = 0, items = result.value; i < items.length; i+=2)
             dict[items[i]] = items[i + 1];
 

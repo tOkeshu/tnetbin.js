@@ -28,6 +28,7 @@ Decodes:
   - integers
   - floats
   - strings
+  - **array buffers**
   - lists
   - objects
 

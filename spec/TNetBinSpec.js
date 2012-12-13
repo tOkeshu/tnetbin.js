@@ -66,6 +66,14 @@ describe("tnetbin.js", function() {
             expect(tnetbin.decode('18:Back to the Future,').value).toBe('Back to the Future');
         });
 
+        it("array buffers", function() {
+            var buffer = new ArrayBuffer(22*2);
+            var view   = new Uint16Array(buffer);
+            for (var i=0; i < 22; i++)
+                view[i] = '18:Back to the Future,'.charCodeAt(i);
+            expect(tnetbin.decode(buffer).value).toBe('Back to the Future');
+        });
+
         it("lists", function() {
             var tnet = "31:5:hello,5:12345#4:3.14^5:false!]";
             var list = ["hello", 12345, 3.14, false];

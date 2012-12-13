@@ -77,6 +77,18 @@ describe("tnetbin.js", function() {
             var dict = {a: "hello", b: 12345, c: 3.14, d: false};
             expect(tnetbin.decode(tnet).value).toEqual(dict);
         });
+
+        it("one element at a time", function() {
+            var tnet = "12:1:1#1:2#1:3#]1:4#", result;
+
+            result = tnetbin.decode(tnet);
+            expect(result.value).toEqual([1, 2, 3]);
+            expect(result.remain).toEqual('1:4#');
+
+            result = tnetbin.decode(result.remain);
+            expect(result.value).toEqual(4);
+            expect(result.remain).toEqual('');
+        });
     });
 });
 

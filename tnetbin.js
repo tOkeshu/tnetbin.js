@@ -58,9 +58,10 @@
         },
 
         toArrayBuffer: function(data) {
-            var view = new Uint16Array(data.length);
+            var len  = data.length;
+            var view = new Uint16Array(len);
             // Transform the string to an array buffer
-            for (var cursor = 0; cursor < data.length; cursor++)
+            for (var cursor = 0; cursor < len; cursor++)
                 view[cursor] = data.charCodeAt(cursor);
 
             return view;
@@ -175,7 +176,9 @@
         var dict = {};
 
         var result = _decodeList(data, cursor, size);
-        for (var i = 0, items = result.value; i < items.length; i+=2)
+        var items  = result.value;
+        var len    = items.length;
+        for (var i = 0; i < len; i+=2)
             dict[items[i]] = items[i + 1];
 
         return {value: dict, cursor: result.cursor};

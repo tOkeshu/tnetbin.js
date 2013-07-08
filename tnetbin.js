@@ -64,12 +64,13 @@
             return {value: result.value, remain: remain(data, result.cursor)};
         },
 
+
         toArrayBuffer: function(data) {
             if (data instanceof ArrayBuffer)
-                return new Uint16Array(data);
+                return new Uint8Array(data);
 
             var len  = data.length;
-            var view = new Uint16Array(len);
+            var view = new Uint8Array(len);
             // Transform the string to an array buffer
             for (var cursor = 0; cursor < len; cursor++)
                 view[cursor] = data.charCodeAt(cursor);

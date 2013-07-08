@@ -24,8 +24,8 @@ describe("tnetbin.js", function() {
         });
 
         it("array buffers", function() {
-            var buffer = new ArrayBuffer(16);
-            var s = String.fromCharCode.apply(null, new Uint16Array(buffer));
+            var buffer = new ArrayBuffer(8);
+            var s = String.fromCharCode.apply(null, new Uint8Array(buffer));
             var result = '8:' + s + ',';
             expect(tnetbin.encode(buffer)).toBe(result)
         });
@@ -67,8 +67,8 @@ describe("tnetbin.js", function() {
         });
 
         it("array buffers", function() {
-            var buffer = new ArrayBuffer(22*2);
-            var view   = new Uint16Array(buffer);
+            var buffer = new ArrayBuffer(22);
+            var view   = new Uint8Array(buffer);
             for (var i=0; i < 22; i++)
                 view[i] = '18:Back to the Future,'.charCodeAt(i);
             expect(tnetbin.decode(buffer).value).toBe('Back to the Future');
@@ -108,4 +108,13 @@ describe("edge cases/bugs", function() {
     it("should decode empty dicts", function() {
         expect(tnetbin.decode('0:}').value).toEqual({});
     });
+
+    it("should decode ArrayBuffers of odd length", function() {
+        var buffer = new ArrayBuffer(3);
+        var view = new Uint8Array(buffer);
+        for (var i=0; i < 3; i++)
+            view[i] = '0:}'.charCodeAt(i);
+        expect(tnetbin.decode(buffer).value).toEqual({});
+    });
+
 });

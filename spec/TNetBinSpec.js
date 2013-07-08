@@ -117,4 +117,12 @@ describe("edge cases/bugs", function() {
         expect(tnetbin.decode(buffer).value).toEqual({});
     });
 
+    it("should encode large ArrayBuffers", function() {
+        var buffer = new ArrayBuffer(512 * 1024);
+        var view = new Uint8Array(buffer);
+        for (var i = 0; i < buffer.byteLength; i++)
+            view[i] = 97;
+        expect(tnetbin.encode(buffer).length).toEqual(512 * 1024 + 8);
+    });
+
 });

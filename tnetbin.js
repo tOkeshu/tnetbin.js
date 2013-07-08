@@ -36,7 +36,7 @@
                 break;
             case 'object':
                 if (obj instanceof ArrayBuffer) { // ArrayBuffer
-                    s = String.fromCharCode.apply(null, new Uint16Array(obj));
+                    s = largeArrayToString(obj);
                     tag = ',';
                 } else if (obj instanceof Array) { // List
                     s = obj.map(tnetbin.encode).join('');
@@ -89,6 +89,24 @@
     LIST    = 93;
     DICT    = 125;
 
+
+    function splitArrayBuffer(data) {
+        var len = data.byteLength;
+        var arrays = []
+        for (var i = 0; (i*2048) < len; i++)
+            arrays.push(data.subarray((i * 2048), (i * 2048) + 2048));
+        return arrays;
+    }
+
+    function largeArrayToString(data) {
+        data = new Uint8Array(data);
+        s = '';
+        splitArrayBuffer(data).forEach(function (array) {
+            s += String.fromCharCode.apply(null, array)
+        });
+        return s;
+    }
+
     function _decode(data, cursor) {
         return _decodeSize(data, cursor, _decodePayload);
     }
@@ -125,7 +143,7 @@
 
     function remain(data, cursor) {
         var d = data.subarray(cursor);
-        return String.fromCharCode.apply(null, d);
+        return largeArrayToString(d);
     }
 
     function _decodeNull(data, cursor) {
@@ -160,7 +178,8 @@
 
     function _decodeString(data, cursor, size) {
         var d = data.subarray(cursor, cursor + size);
-        return {value: String.fromCharCode.apply(null, d), cursor: cursor + size + 1};
+        var s = largeArrayToString(d);
+        return {value: s, cursor: cursor + size + 1};
     }
 
     function _decodeList(data, cursor, size) {

@@ -1,4 +1,4 @@
-// TNetBin.js 0.1.0
+// TNetBin.js 0.2.0
 
 // (c) 2012-2013 Romain Gauthier.
 // TNetBin may be freely distributed under the MIT license.

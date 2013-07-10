@@ -7,7 +7,7 @@
 
 (function(globalScope) {
 
-  globalScope.tnetbin = {
+  var tnetbin = {
     encode: function(obj) {
       switch (obj) {
       case null:
@@ -58,12 +58,12 @@
     },
 
     decode: function(data) {
+      var result;
       data = this.toArrayBuffer(data);
       result = _decode(data, 0);
 
       return {value: result.value, remain: remain(data, result.cursor)};
     },
-
 
     toArrayBuffer: function(data) {
       if (data instanceof ArrayBuffer)
@@ -77,32 +77,30 @@
 
       return view;
     }
-  }
+  };
 
-  COLON   = 58;
-  ZERO    = 48;
-  NULL    = 126;
-  BOOLEAN = 33;
-  INTEGER = 35;
-  FLOAT   = 94;
-  STRING  = 44;
-  LIST    = 93;
-  DICT    = 125;
-
+  var COLON   = 58;
+  var ZERO    = 48;
+  var NULL    = 126;
+  var BOOLEAN = 33;
+  var INTEGER = 35;
+  var FLOAT   = 94;
+  var STRING  = 44;
+  var LIST    = 93;
+  var DICT    = 125;
 
   function splitArrayBuffer(data) {
     var len = data.byteLength;
-    var arrays = []
+    var arrays = [];
     for (var i = 0; (i*2048) < len; i++)
       arrays.push(data.subarray((i * 2048), (i * 2048) + 2048));
     return arrays;
   }
 
   function largeArrayToString(data) {
-    data = new Uint8Array(data);
-    s = '';
-    splitArrayBuffer(data).forEach(function (array) {
-      s += String.fromCharCode.apply(null, array)
+    var s = '';
+    splitArrayBuffer(new Uint8Array(data)).forEach(function (array) {
+      s += String.fromCharCode.apply(null, array);
     });
     return s;
   }
@@ -112,14 +110,14 @@
   }
 
   function _decodeSize(data, cursor, callback) {
-    for (var size=0; data[cursor] != COLON; cursor++) {
+    for (var size=0; data[cursor] !== COLON; cursor++) {
       size = size*10 + (data[cursor] - ZERO);
     }
 
     return callback(data, cursor + 1, size);
   }
 
-  function _decodePayload(data, cursor, size, tag) {
+  function _decodePayload(data, cursor, size) {
     var tag = data[cursor + size];
     switch (tag) {
     case NULL:
@@ -163,13 +161,14 @@
   }
 
   function _decodeFloat(data, cursor, size) {
-    var exp, end = cursor + size;
+    var value, exp, decimal;
+    var end = cursor + size;
 
-    for(var value = 0; data[cursor] != 46; cursor++)
+    for(value = 0; data[cursor] !== 46; cursor++)
       value = value*10 + (data[cursor] - ZERO);
 
     cursor++;
-    for (var decimal = 0, exp=1; cursor < end; cursor++, exp*=10) {
+    for (decimal = 0, exp=1; cursor < end; cursor++, exp*=10) {
       decimal = decimal*10 + (data[cursor] - ZERO);
     }
 
@@ -214,5 +213,6 @@
     return {value: dict, cursor: result.cursor};
   }
 
+  globalScope.tnetbin = tnetbin;
 }(window));
 

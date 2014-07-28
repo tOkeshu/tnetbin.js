@@ -138,7 +138,8 @@ var tnetbin = (function() {
     },
 
     _decode: function(data, cursor) {
-      return this._decodeSize(data, cursor, this._decodePayload.bind(this));
+      var result = this._decodeSize(data, cursor);
+      return this._decodePayload(data, result.cursor, result.value);
     },
 
     _decodeSize: function(data, cursor, callback) {
@@ -146,7 +147,7 @@ var tnetbin = (function() {
         size = size*10 + (data[cursor] - ZERO);
       }
 
-      return callback(data, cursor + 1, size);
+      return {value: size, cursor: cursor + 1};
     },
 
     _decodePayload: function(data, cursor, size) {
@@ -173,7 +174,7 @@ var tnetbin = (function() {
 
     remain: function(data, cursor) {
       var d = data.subarray(cursor);
-      return largeArrayToString(d);
+      return (this.options.arraybuffer ? d : largeArrayToString(d));
     },
 
     _decodeNull: function(data, cursor) {
@@ -211,10 +212,10 @@ var tnetbin = (function() {
       var s;
       data = data.subarray(cursor, cursor + size);
 
-      if (true) //isAString(d))
-        return {value: largeArrayToString(data), cursor: cursor + size + 1};
-      else
+      if (this.options.arraybuffer)
         return {value: data, cursor: cursor + size + 1};
+      else
+        return {value: largeArrayToString(data), cursor: cursor + size + 1};
     },
 
     _decodeList: function(data, cursor, size) {
@@ -243,8 +244,13 @@ var tnetbin = (function() {
       var result = this._decodeList(data, cursor, size);
       var items  = result.value;
       var len    = items.length;
-      for (var i = 0; i < len; i+=2)
-        dict[items[i]] = items[i + 1];
+      var key;
+
+      for (var i = 0; i < len; i+=2) {
+        key = items[i];
+        key = this.options.arraybuffer ? largeArrayToString(key) : key;
+        dict[key] = items[i + 1];
+      }
 
       return {value: dict, cursor: result.cursor};
     }

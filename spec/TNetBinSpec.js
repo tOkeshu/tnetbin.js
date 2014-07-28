@@ -185,15 +185,45 @@ describe("tnetbin.js", function() {
       });
     });
 
-    describe("#isAString", function() {
+  });
 
-      it("should be false for ArrayBuffers of odd length", function() {
-        var buffer = new ArrayBuffer(3);
-        expect(tnetbin.isAString(buffer)).toBe(false);
+  describe("Decoder with {arraybuffer: true}", function() {
+
+    var decoder = new tnetbin.Decoder({arraybuffer: true});
+
+    describe("#decode", function() {
+
+      it("strings", function() {
+        expect(decoder.decode('18:Back to the Future,').value)
+          .toBinaryEqual('Back to the Future');
       });
 
+      it("array buffers", function() {
+        var buffer = new ArrayBuffer(22);
+        var view   = new Uint8Array(buffer);
+        for (var i=0; i < 22; i++)
+          view[i] = '18:Back to the Future,'.charCodeAt(i);
+        expect(decoder.decode(buffer).value)
+          .toBinaryEqual('Back to the Future');
+      });
+
+      it("dicts", function() {
+        var tnet = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
+        var hello = tnetbin.toArrayBuffer("hello");
+        var dict = {a: hello, b: 12345, c: 3.14, d: false};
+        expect(decoder.decode(tnet).value).toEqual(dict);
+      });
     });
 
+  });
+
+});
+
+describe("#isAString", function() {
+
+  it("should be false for ArrayBuffers of odd length", function() {
+    var buffer = new ArrayBuffer(3);
+    expect(tnetbin.isAString(buffer)).toBe(false);
   });
 
 });

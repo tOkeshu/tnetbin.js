@@ -1,10 +1,80 @@
 var tnetbin = (function() {
+
+  var COLON   = 58;
+  var ZERO    = 48;
+  var NULL    = 126;
+  var BOOLEAN = 33;
+  var INTEGER = 35;
+  var FLOAT   = 94;
+  var STRING  = 44;
+  var LIST    = 93;
+  var DICT    = 125;
+
   function Encoder(options) {
     this.options = options || {};
   }
 
   Encoder.prototype = {
-    encode: function(obj, options) {
+    encode: function(obj) {
+      if (this.options.arraybuffer)
+        return this._encodeToArrayBuffer(obj);
+
+      return this._encodeToString(obj);
+    },
+
+    _encodeToArrayBuffer: function(obj) {
+      switch (obj) {
+      case null:
+        return new Uint8Array([48, 58, 126]); // '0:~'
+      case true:
+        return new Uint8Array([52, 58, 116, 114, 117, 101, 33]); // '4:true!'
+      case false:
+         // '5:false!'
+        return new Uint8Array([53, 58, 102, 97, 108, 115, 101, 33]);
+      }
+
+      var type = typeof obj, s, tag;
+
+      switch (type) {
+      case 'string':
+        s   = toArrayBuffer(obj);
+        tag = new Uint8Array([STRING]);
+        break;
+      case 'number':
+        s = toArrayBuffer(obj.toString());
+        // Integer
+        if (obj % 1 === 0)
+          tag = new Uint8Array([INTEGER]); // '#'
+        // Float
+        else
+          tag = new Uint8Array([FLOAT]); // '^'
+        break;
+      case 'object':
+        if (obj instanceof ArrayBuffer) { // ArrayBuffer
+          s = obj;
+          tag = new Uint8Array([STRING]);
+        } else if (obj instanceof Array) { // List
+          s = obj.map(this._encodeToArrayBuffer.bind(this));
+          s = concatArrayBuffers(s);
+          tag = new Uint8Array([LIST]);
+        } else { // Object
+          var attrs = [];
+          for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) {
+              attrs.push(this._encodeToArrayBuffer(attr),
+                         this._encodeToArrayBuffer(obj[attr]));
+            }
+          }
+          s = concatArrayBuffers(attrs);
+          tag = new Uint8Array([DICT]);
+        }
+      }
+
+      var size = toArrayBuffer(s.byteLength.toString());
+      return concatArrayBuffers([size, COLON, s, tag])
+    },
+
+    _encodeToString: function(obj) {
       switch (obj) {
       case null:
         return '0:~';
@@ -35,7 +105,7 @@ var tnetbin = (function() {
           s = largeArrayToString(obj);
           tag = ',';
         } else if (obj instanceof Array) { // List
-          s = obj.map(this.encode).join('');
+          s = obj.map(this.encode.bind(this)).join('');
           tag = ']';
         } else { // Object
           var attrs = [];
@@ -57,16 +127,6 @@ var tnetbin = (function() {
   function Decoder(options) {
     this.options = options || {};
   }
-
-  var COLON   = 58;
-  var ZERO    = 48;
-  var NULL    = 126;
-  var BOOLEAN = 33;
-  var INTEGER = 35;
-  var FLOAT   = 94;
-  var STRING  = 44;
-  var LIST    = 93;
-  var DICT    = 125;
 
   Decoder.prototype = {
     decode: function(data) {
@@ -230,10 +290,28 @@ var tnetbin = (function() {
     return s;
   }
 
+  function concatArrayBuffers(arrays) {
+    var byteLength = arrays.reduce(function(acc, b) {
+      return (typeof b === 'number') ? acc + 1 : acc + b.byteLength;
+    }, 0);
+    var result = new Uint8Array(byteLength);
+    var offset = 0;
+
+    arrays.forEach(function(array) {
+      array = (typeof array === 'number') ? new Uint8Array([array]) : array;
+      result.set(array, offset);
+      offset += array.byteLength;
+    });
+
+    return result;
+  }
+
   return {
     Encoder: Encoder,
     Decoder: Decoder,
-    isAString: isAString
+    isAString: isAString,
+    largeArrayToString: largeArrayToString,
+    toArrayBuffer: toArrayBuffer
   }
 }());
 

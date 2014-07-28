@@ -1,5 +1,31 @@
 describe("tnetbin.js", function() {
 
+  beforeEach(function() {
+    jasmine.addMatchers({
+      toBinaryEqual: function() {
+        return {
+          compare: function(actual, expected) {
+            if (!(actual instanceof Uint8Array))
+              return {pass: false, message: actual + " is not an Uint8Array"};
+
+            var array = new Uint8Array(actual);
+            actual = String.fromCharCode.apply(null, array);
+
+            var result = {
+              pass: actual === expected
+            };
+            if (result.pass) {
+              result.message = actual + ' is binary equal to ' + expected;
+            } else {
+              result.message = actual + ' is not binary equal to ' + expected;
+            }
+            return result;
+          }
+        };
+      }
+    });
+  });
+
   describe("Encoder", function() {
     var encoder = new tnetbin.Encoder();
 
@@ -43,6 +69,57 @@ describe("tnetbin.js", function() {
         var object = {a: "hello", b: 12345, c: 3.14, d: false};
         var result = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
         expect(encoder.encode(object)).toBe(result);
+      });
+
+    });
+
+  });
+
+  describe("Encoder with {arraybuffer: true}", function() {
+    var encoder = new tnetbin.Encoder({arraybuffer: true});
+
+    describe("#encode", function() {
+
+      it("null", function() {
+        expect(encoder.encode(null)).toBinaryEqual('0:~');
+      });
+
+      it("booleans", function() {
+        expect(encoder.encode(true)).toBinaryEqual('4:true!');
+        expect(encoder.encode(false)).toBinaryEqual('5:false!');
+      });
+
+      it("integers", function() {
+        expect(encoder.encode(123)).toBinaryEqual('3:123#');
+      });
+
+      it("floats", function() {
+        expect(encoder.encode(3.141592653589793))
+          .toBinaryEqual('17:3.141592653589793^');
+      });
+
+      it("strings", function() {
+        expect(encoder.encode('Back to the Future'))
+          .toBinaryEqual('18:Back to the Future,');
+      });
+
+      it("array buffers", function() {
+        var buffer = new ArrayBuffer(8);
+        var s = String.fromCharCode.apply(null, new Uint8Array(buffer));
+        var result = '8:' + s + ',';
+        expect(encoder.encode(buffer)).toBinaryEqual(result)
+      });
+
+      it("lists", function() {
+        var array = ["hello", 12345, 3.14, false];
+        var result = "31:5:hello,5:12345#4:3.14^5:false!]";
+        expect(encoder.encode(array)).toBinaryEqual(result);
+      });
+
+      it("dicts", function() {
+        var object = {a: "hello", b: 12345, c: 3.14, d: false};
+        var result = "47:1:a,5:hello,1:b,5:12345#1:c,4:3.14^1:d,5:false!}";
+        expect(encoder.encode(object)).toBinaryEqual(result);
       });
 
     });

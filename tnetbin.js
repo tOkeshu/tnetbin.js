@@ -51,9 +51,18 @@ var tnetbin = (function() {
         break;
       case 'object':
         if (obj instanceof ArrayBuffer) { // ArrayBuffer
-          s = obj;
+          s = new Uint8Array(obj);
           tag = new Uint8Array([STRING]);
-        } else if (obj instanceof Array) { // List
+        } else if (obj instanceof Int8Array    || // ArrayBufferView
+                   obj instanceof Uint8Array   ||
+                   obj instanceof Uint16Array  ||
+                   obj instanceof Int32Array   ||
+                   obj instanceof Uint32Array  ||
+                   obj instanceof Float32Array ||
+                   obj instanceof Float64Array) {
+          s = new Uint8Array(obj.buffer);
+          tag = new Uint8Array([STRING]);
+        }else if (obj instanceof Array) { // List
           s = obj.map(this._encodeToArrayBuffer.bind(this));
           s = concatArrayBuffers(s);
           tag = new Uint8Array([LIST]);
@@ -103,6 +112,15 @@ var tnetbin = (function() {
       case 'object':
         if (obj instanceof ArrayBuffer) { // ArrayBuffer
           s = largeArrayToString(obj);
+          tag = ',';
+        } else if (obj instanceof Int8Array    || // ArrayBufferView
+                   obj instanceof Uint8Array   ||
+                   obj instanceof Uint16Array  ||
+                   obj instanceof Int32Array   ||
+                   obj instanceof Uint32Array  ||
+                   obj instanceof Float32Array ||
+                   obj instanceof Float64Array) {
+          s = largeArrayToString(obj.buffer);
           tag = ',';
         } else if (obj instanceof Array) { // List
           s = obj.map(this.encode.bind(this)).join('');
@@ -316,8 +334,8 @@ var tnetbin = (function() {
     Encoder: Encoder,
     Decoder: Decoder,
     isAString: isAString,
-    largeArrayToString: largeArrayToString,
-    toArrayBuffer: toArrayBuffer
+    toArrayBuffer: toArrayBuffer,
+    concatArrayBuffers: concatArrayBuffers
   }
 }());
 

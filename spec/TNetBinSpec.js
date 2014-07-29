@@ -59,6 +59,13 @@ describe("tnetbin.js", function() {
         expect(encoder.encode(buffer)).toBe(result)
       });
 
+      it("array buffer views", function() {
+        var buffer = new ArrayBuffer(8);
+        var s = String.fromCharCode.apply(null, new Uint8Array(buffer));
+        var result = '8:' + s + ',';
+        expect(encoder.encode(new Uint8Array(buffer))).toBe(result)
+      });
+
       it("lists", function() {
         var array = ["hello", 12345, 3.14, false];
         var result = "31:5:hello,5:12345#4:3.14^5:false!]";
@@ -108,6 +115,13 @@ describe("tnetbin.js", function() {
         var s = String.fromCharCode.apply(null, new Uint8Array(buffer));
         var result = '8:' + s + ',';
         expect(encoder.encode(buffer)).toBinaryEqual(result)
+      });
+
+      it("array buffer views", function() {
+        var buffer = new ArrayBuffer(8);
+        var s = String.fromCharCode.apply(null, new Uint8Array(buffer));
+        var result = '8:' + s + ',';
+        expect(encoder.encode(new Uint8Array(buffer))).toBinaryEqual(result);
       });
 
       it("lists", function() {
@@ -255,4 +269,5 @@ describe("edge cases/bugs", function() {
       view[i] = 97;
     expect(encoder.encode(buffer).length).toEqual(512 * 1024 + 8);
   });
+
 });

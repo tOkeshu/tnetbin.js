@@ -231,43 +231,43 @@ describe("tnetbin.js", function() {
 
   });
 
-});
+  describe("#isAString", function() {
 
-describe("#isAString", function() {
+    it("should be false for ArrayBuffers of odd length", function() {
+      var buffer = new ArrayBuffer(3);
+      expect(tnetbin.isAString(buffer)).toBe(false);
+    });
 
-  it("should be false for ArrayBuffers of odd length", function() {
-    var buffer = new ArrayBuffer(3);
-    expect(tnetbin.isAString(buffer)).toBe(false);
   });
 
-});
+  describe("edge cases/bugs", function() {
+    var encoder = new tnetbin.Encoder();
+    var decoder = new tnetbin.Decoder();
 
-describe("edge cases/bugs", function() {
-  var encoder = new tnetbin.Encoder();
-  var decoder = new tnetbin.Decoder();
+    it("should decode empty lists", function() {
+      expect(decoder.decode('0:]').value).toEqual([]);
+    });
 
-  it("should decode empty lists", function() {
-    expect(decoder.decode('0:]').value).toEqual([]);
-  });
+    it("should decode empty dicts", function() {
+      expect(decoder.decode('0:}').value).toEqual({});
+    });
 
-  it("should decode empty dicts", function() {
-    expect(decoder.decode('0:}').value).toEqual({});
-  });
+    it("should decode ArrayBuffers of odd length", function() {
+      var buffer = new ArrayBuffer(3);
+      var view = new Uint8Array(buffer);
+      for (var i=0; i < 3; i++)
+        view[i] = '0:}'.charCodeAt(i);
+      expect(decoder.decode(buffer).value).toEqual({});
+    });
 
-  it("should decode ArrayBuffers of odd length", function() {
-    var buffer = new ArrayBuffer(3);
-    var view = new Uint8Array(buffer);
-    for (var i=0; i < 3; i++)
-      view[i] = '0:}'.charCodeAt(i);
-    expect(decoder.decode(buffer).value).toEqual({});
-  });
+    it("should encode large ArrayBuffers", function() {
+      var buffer = new ArrayBuffer(512 * 1024);
+      var view = new Uint8Array(buffer);
+      for (var i = 0; i < buffer.byteLength; i++)
+        view[i] = 97;
+      expect(encoder.encode(buffer).length).toEqual(512 * 1024 + 8);
+    });
 
-  it("should encode large ArrayBuffers", function() {
-    var buffer = new ArrayBuffer(512 * 1024);
-    var view = new Uint8Array(buffer);
-    for (var i = 0; i < buffer.byteLength; i++)
-      view[i] = 97;
-    expect(encoder.encode(buffer).length).toEqual(512 * 1024 + 8);
   });
 
 });

@@ -268,6 +268,11 @@ describe("tnetbin.js", function() {
       expect(encoder.encode(buffer).length).toEqual(512 * 1024 + 8);
     });
 
+    it("should decode an encoded value with {arraybuffer: true}", function() {
+      var encoder = new tnetbin.Encoder({arraybuffer: true});
+      expect(decoder.decode(encoder.encode("foo")).value).toBe("foo");
+    })
+
   });
 
 });
